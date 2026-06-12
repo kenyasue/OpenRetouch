@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenRetouch.App/OpenRetouch.App.csproj">
+      <Platform Solution="Debug|*" Project="ARM64" />
+    </Project>
+    <Project Path="src/OpenRetouch.Catalog/OpenRetouch.Catalog.csproj" />
+    <Project Path="src/OpenRetouch.Core/OpenRetouch.Core.csproj" />
+    <Project Path="src/OpenRetouch.Imaging/OpenRetouch.Imaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenRetouch.Catalog.Tests/OpenRetouch.Catalog.Tests.csproj" />
+    <Project Path="tests/OpenRetouch.Core.Tests/OpenRetouch.Core.Tests.csproj" />
+    <Project Path="tests/OpenRetouch.Imaging.Tests/OpenRetouch.Imaging.Tests.csproj" />
+  </Folder>
+</Solution>

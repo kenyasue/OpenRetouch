@@ -1,0 +1,39 @@
+<UserControl
+  x:Class="OpenRetouch.App.Controls.CropOverlay"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Canvas x:Name="RootCanvas" Background="Transparent">
+    <!-- Shade (area outside the crop) -->
+    <Rectangle x:Name="ShadeTop" Fill="#A0000000" />
+    <Rectangle x:Name="ShadeBottom" Fill="#A0000000" />
+    <Rectangle x:Name="ShadeLeft" Fill="#A0000000" />
+    <Rectangle x:Name="ShadeRight" Fill="#A0000000" />
+
+    <!-- Crop frame (drag inside to move) -->
+    <Rectangle x:Name="CropRect"
+               Stroke="{StaticResource AccentBrush}"
+               StrokeThickness="1.5"
+               Fill="Transparent"
+               ManipulationMode="TranslateX,TranslateY"
+               ManipulationDelta="OnRectManipulationDelta" />
+
+    <!-- Corner handles -->
+    <Rectangle x:Name="HandleTopLeft" Width="12" Height="12"
+               Fill="{StaticResource AccentBrush}"
+               ManipulationMode="TranslateX,TranslateY"
+               ManipulationDelta="OnHandleManipulationDelta" Tag="TL" />
+    <Rectangle x:Name="HandleTopRight" Width="12" Height="12"
+               Fill="{StaticResource AccentBrush}"
+               ManipulationMode="TranslateX,TranslateY"
+               ManipulationDelta="OnHandleManipulationDelta" Tag="TR" />
+    <Rectangle x:Name="HandleBottomLeft" Width="12" Height="12"
+               Fill="{StaticResource AccentBrush}"
+               ManipulationMode="TranslateX,TranslateY"
+               ManipulationDelta="OnHandleManipulationDelta" Tag="BL" />
+    <Rectangle x:Name="HandleBottomRight" Width="12" Height="12"
+               Fill="{StaticResource AccentBrush}"
+               ManipulationMode="TranslateX,TranslateY"
+               ManipulationDelta="OnHandleManipulationDelta" Tag="BR" />
+  </Canvas>
+</UserControl>

@@ -1,0 +1,376 @@
+<Page
+  x:Class="OpenRetouch.App.Views.EditPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:vm="using:OpenRetouch.App.ViewModels"
+  xmlns:conv="using:OpenRetouch.App.Converters"
+  xmlns:controls="using:OpenRetouch.App.Controls"
+  xmlns:models="using:OpenRetouch.Core.Models"
+  Background="{StaticResource BackgroundPrimaryBrush}">
+
+  <Page.Resources>
+    <conv:PathToImageSourceConverter x:Key="PathToImage" />
+  </Page.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="110" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="320" />
+    </Grid.ColumnDefinitions>
+
+    <!-- ============ Center: Preview ============ -->
+    <Grid Grid.Row="0" Grid.Column="0" Background="{StaticResource BackgroundCanvasBrush}"
+          x:Name="PreviewContainer" SizeChanged="OnPreviewContainerSizeChanged">
+      <Image x:Name="PreviewImage"
+             Source="{x:Bind ViewModel.PreviewSource, Mode=OneWay}"
+             Stretch="Uniform"
+             Margin="16" />
+      <controls:CropOverlay x:Name="CropOverlayControl"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            Visibility="Collapsed"
+                            CropChanged="OnCropOverlayChanged" />
+
+      <StackPanel Orientation="Horizontal" Spacing="8"
+                  HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12">
+        <TextBlock Text="{x:Bind ViewModel.PhotoName, Mode=OneWay}"
+                   Foreground="{StaticResource TextPrimaryBrush}"
+                   VerticalAlignment="Center" />
+        <TextBlock Text="(Before)"
+                   Foreground="{StaticResource AccentBrush}"
+                   VerticalAlignment="Center"
+                   Visibility="{x:Bind ViewModel.IsShowingBefore, Mode=OneWay}" />
+      </StackPanel>
+
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                  Visibility="{x:Bind ViewModel.HasNoPhoto, Mode=OneWay}">
+        <TextBlock Text="No Photo Selected"
+                   FontSize="20"
+                   Foreground="{StaticResource TextPrimaryBrush}"
+                   HorizontalAlignment="Center" />
+        <TextBlock Text="Select a photo in Library, then open Edit"
+                   Foreground="{StaticResource TextDisabledBrush}"
+                   HorizontalAlignment="Center" />
+      </StackPanel>
+    </Grid>
+
+    <!-- ============ Right Panel: Adjustment Sliders ============ -->
+    <Border Grid.Row="0" Grid.Column="1"
+            Background="{StaticResource BackgroundPanelBrush}"
+            BorderBrush="{StaticResource BorderSubtleBrush}"
+            BorderThickness="1,0,0,0">
+      <ScrollViewer IsEnabled="{x:Bind ViewModel.HasPhoto, Mode=OneWay}">
+        <StackPanel Margin="16" Spacing="2">
+
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Button Content="Auto Tone" Command="{x:Bind ViewModel.AutoToneCommand}"
+                    ToolTipService.ToolTip="Automatically correct tone using histogram analysis" />
+            <ToggleButton Content="Before / After (\)"
+                          IsChecked="{x:Bind ViewModel.IsShowingBefore, Mode=TwoWay}" />
+            <Button Content="Reset" Command="{x:Bind ViewModel.ResetCommand}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+            <Button Content="Undo" Command="{x:Bind ViewModel.UndoCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanUndo, Mode=OneWay}" />
+            <Button Content="Redo" Command="{x:Bind ViewModel.RedoCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanRedo, Mode=OneWay}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+            <Button Content="Copy Settings" Command="{x:Bind ViewModel.CopySettingsCommand}" />
+            <Button Content="Paste" Command="{x:Bind ViewModel.PasteSettingsCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanPaste, Mode=OneWay}" />
+          </StackPanel>
+          <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                     FontSize="12"
+                     TextWrapping="Wrap"
+                     Foreground="{StaticResource AccentBrush}"
+                     Margin="0,4,0,12" />
+
+          <!-- Crop -->
+          <TextBlock Text="Crop / Rotate" FontWeight="SemiBold"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <ToggleButton Content="Edit Crop"
+                          IsChecked="{x:Bind ViewModel.IsCropMode, Mode=TwoWay}" />
+            <Button Content="Clear" Command="{x:Bind ViewModel.ClearCropCommand}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+            <Button Content="Left 90°" Command="{x:Bind ViewModel.RotateLeftCommand}" />
+            <Button Content="Right 90°" Command="{x:Bind ViewModel.RotateRightCommand}" />
+            <Button Content="Flip Horizontal" Command="{x:Bind ViewModel.FlipHorizontalCommand}" />
+            <Button Content="Flip Vertical" Command="{x:Bind ViewModel.FlipVerticalCommand}" />
+          </StackPanel>
+          <TextBlock Text="Aspect Ratio" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <ComboBox SelectedIndex="{x:Bind ViewModel.CropAspectIndex, Mode=TwoWay}" HorizontalAlignment="Stretch">
+            <ComboBoxItem Content="Free" />
+            <ComboBoxItem Content="1:1" />
+            <ComboBoxItem Content="4:5" />
+            <ComboBoxItem Content="16:9" />
+            <ComboBoxItem Content="3:2" />
+          </ComboBox>
+          <TextBlock Text="Straighten" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-45" Maximum="45" StepFrequency="0.1"
+                    Value="{x:Bind ViewModel.Straighten, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-45" Maximum="45" SmallChange="0.5"
+                       Value="{x:Bind ViewModel.Straighten, Mode=TwoWay}" />
+          </Grid>
+
+          <!-- White Balance -->
+          <TextBlock Text="White Balance" FontWeight="SemiBold"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+          <TextBlock Text="Temperature" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Temperature, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Temperature, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Tint" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Tint, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Tint, Mode=TwoWay}" />
+          </Grid>
+
+          <!-- Tone -->
+          <TextBlock Text="Tone" FontWeight="SemiBold" Margin="0,12,0,0"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+          <TextBlock Text="Exposure" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-5" Maximum="5" StepFrequency="0.05"
+                    Value="{x:Bind ViewModel.Exposure, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-5" Maximum="5" SmallChange="0.1"
+                       Value="{x:Bind ViewModel.Exposure, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Contrast" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Contrast, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Contrast, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Highlights" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Highlights, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Highlights, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Shadows" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Shadows, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Shadows, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Whites" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Whites, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Whites, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Blacks" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Blacks, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Blacks, Mode=TwoWay}" />
+          </Grid>
+
+          <!-- Color -->
+          <TextBlock Text="Color" FontWeight="SemiBold" Margin="0,12,0,0"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+          <TextBlock Text="Vibrance" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Vibrance, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Vibrance, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Saturation" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Saturation, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Saturation, Mode=TwoWay}" />
+          </Grid>
+
+          <!-- Detail -->
+          <TextBlock Text="Detail" FontWeight="SemiBold" Margin="0,12,0,0"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+          <TextBlock Text="Clarity" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Clarity, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Clarity, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Texture" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Texture, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Texture, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Dehaze" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="-100" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Dehaze, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="-100" Maximum="100"
+                       Value="{x:Bind ViewModel.Dehaze, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Sharpening" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="0" Maximum="150" StepFrequency="1"
+                    Value="{x:Bind ViewModel.Sharpening, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="0" Maximum="150"
+                       Value="{x:Bind ViewModel.Sharpening, Mode=TwoWay}" />
+          </Grid>
+          <TextBlock Text="Noise Reduction" FontSize="12" Foreground="{StaticResource TextDisabledBrush}" />
+          <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" /><ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+            <Slider Minimum="0" Maximum="100" StepFrequency="1"
+                    Value="{x:Bind ViewModel.NoiseReduction, Mode=TwoWay}" />
+            <NumberBox Grid.Column="1" Minimum="0" Maximum="100"
+                       Value="{x:Bind ViewModel.NoiseReduction, Mode=TwoWay}" />
+          </Grid>
+
+          <!-- Presets -->
+          <TextBlock Text="Presets" FontWeight="SemiBold" Margin="0,12,0,0"
+                     Foreground="{StaticResource TextPrimaryBrush}" />
+          <ListView ItemsSource="{x:Bind ViewModel.Presets}"
+                    SelectionMode="None"
+                    MaxHeight="200">
+            <ListView.ItemTemplate>
+              <DataTemplate x:DataType="models:Preset">
+                <Grid ColumnSpacing="4">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{x:Bind Name}" Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Text="{x:Bind Category}" FontSize="10"
+                               Foreground="{StaticResource TextDisabledBrush}" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="Apply" FontSize="11" Padding="6,2"
+                          Click="OnApplyPresetClicked" Tag="{x:Bind}" />
+                  <Button Grid.Column="2" Content="&#xEDE1;" FontFamily="Segoe Fluent Icons"
+                          FontSize="11" Padding="6,2" ToolTipService.ToolTip="Export"
+                          Click="OnExportPresetClicked" Tag="{x:Bind}" />
+                  <Button Grid.Column="3" Content="&#xE74D;" FontFamily="Segoe Fluent Icons"
+                          FontSize="11" Padding="6,2" ToolTipService.ToolTip="Delete"
+                          Click="OnDeletePresetClicked" Tag="{x:Bind}" />
+                </Grid>
+              </DataTemplate>
+            </ListView.ItemTemplate>
+          </ListView>
+          <Grid ColumnSpacing="4">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox PlaceholderText="New preset name"
+                     Text="{x:Bind ViewModel.NewPresetName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Grid.Column="1" Content="Save" Command="{x:Bind ViewModel.SavePresetCommand}" />
+          </Grid>
+          <TextBox PlaceholderText="Category (optional)"
+                   Text="{x:Bind ViewModel.NewPresetCategory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+          <Button Content="Import Preset..." Click="OnImportPresetClicked"
+                  HorizontalAlignment="Stretch" Margin="0,4,0,0" />
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+
+    <!-- ============ Filmstrip (shared with Library) ============ -->
+    <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+            Background="{StaticResource BackgroundPanelBrush}"
+            BorderBrush="{StaticResource BorderSubtleBrush}"
+            BorderThickness="0,1,0,0">
+      <ListView ItemsSource="{x:Bind ViewModel.Library.Photos}"
+                SelectedItem="{x:Bind ViewModel.Library.SelectedPhoto, Mode=TwoWay}"
+                SelectionMode="Single"
+                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                ScrollViewer.HorizontalScrollMode="Enabled"
+                ScrollViewer.VerticalScrollMode="Disabled"
+                Padding="4">
+        <ListView.ItemsPanel>
+          <ItemsPanelTemplate>
+            <ItemsStackPanel Orientation="Horizontal" />
+          </ItemsPanelTemplate>
+        </ListView.ItemsPanel>
+        <ListView.ItemTemplate>
+          <DataTemplate x:DataType="vm:PhotoItemViewModel">
+            <Grid Width="84" Height="84" Background="{StaticResource BackgroundCanvasBrush}">
+              <FontIcon Glyph="&#xE91B;" FontSize="16" Foreground="{StaticResource TextDisabledBrush}" />
+              <Image Source="{x:Bind ThumbnailPath, Mode=OneWay, Converter={StaticResource PathToImage}}"
+                     Stretch="Uniform" Margin="2" />
+            </Grid>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
+    </Border>
+  </Grid>
+
+  <Page.KeyboardAccelerators>
+    <KeyboardAccelerator Key="Z" Modifiers="Control" Invoked="OnUndoInvoked" />
+    <KeyboardAccelerator Key="Y" Modifiers="Control" Invoked="OnRedoInvoked" />
+    <KeyboardAccelerator Key="G" Invoked="OnGoLibraryInvoked" />
+  </Page.KeyboardAccelerators>
+</Page>
